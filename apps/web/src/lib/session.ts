@@ -30,9 +30,21 @@ export async function destroySession(): Promise<void> {
   (await cookies()).delete(COOKIE);
 }
 
+/** Comparação de strings em tempo constante (para segredos). */
+export function safeEqual(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
 export async function isAdmin(): Promise<boolean> {
   const value = (await cookies()).get(COOKIE)?.value;
   if (!value) return false;
+  // Sem SESSION_SECRET ninguém é admin, mas as páginas públicas continuam funcionando
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+    console.error("SESSION_SECRET ausente ou curto demais; login do admin desativado");
+    return false;
+  }
   const i = value.lastIndexOf(".");
   const payload = value.slice(0, i);
   const sig = Buffer.from(value.slice(i + 1), "hex");

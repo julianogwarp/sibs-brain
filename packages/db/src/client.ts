@@ -25,6 +25,11 @@ export function getDb(): Promise<Db> {
   return dbPromise;
 }
 
+/** URI sem usuário e senha, para mensagens de erro e logs. */
+function redact(uri: string): string {
+  return uri.replace(/\/\/[^@/]*@/, "//***@");
+}
+
 async function connect(): Promise<Db> {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI não definido");
@@ -34,7 +39,8 @@ async function connect(): Promise<Db> {
   } catch (err) {
     await c.close().catch(() => {});
     const reason = err instanceof Error ? err.message : String(err);
-    throw new Error(`Não foi possível conectar ao Mongo em ${uri}. Ele está rodando? (${reason})`, { cause: err });
+    // Nunca a URI completa: ela tem a senha do banco e iria parar nos logs
+    throw new Error(`Não foi possível conectar ao Mongo em ${redact(uri)}. Ele está rodando? (${redact(reason)})`);
   }
   client = c;
   return c.db(process.env.MONGODB_DB ?? "sibs-brain");

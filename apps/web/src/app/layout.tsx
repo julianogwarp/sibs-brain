@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { HeaderMenu } from "@/components/header-menu";
 import "@fontsource-variable/inter";
 import "./globals.css";
@@ -16,6 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <HeaderMenu />
         </header>
         <main>{children}</main>
+        {/* Vercel Web Analytics: visitantes e páginas vistas em todas as páginas (painel do projeto → Analytics) */}
+        <Analytics />
       </body>
     </html>
   );

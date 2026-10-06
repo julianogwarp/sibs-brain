@@ -1,15 +1,17 @@
 import { redirect } from "next/navigation";
-import { createSession } from "@/lib/session";
+import { allowAction } from "@/lib/rate-limit";
+import { createSession, safeEqual } from "@/lib/session";
 import { verifyPassword } from "@/lib/password";
 
 async function login(formData: FormData) {
   "use server";
+  // Até 5 tentativas a cada 15 minutos por visitante, contra adivinhação de senha
+  if (!(await allowAction("login", 5, 15))) redirect("/admin/login?erro=limite");
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const ok =
-    email === process.env.ADMIN_EMAIL &&
-    !!process.env.ADMIN_PASSWORD_HASH &&
-    verifyPassword(password, process.env.ADMIN_PASSWORD_HASH);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const hash = process.env.ADMIN_PASSWORD_HASH;
+  const ok = !!adminEmail && !!hash && safeEqual(email, adminEmail) && verifyPassword(password, hash);
   if (!ok) redirect("/admin/login?erro=1");
   await createSession();
   redirect("/admin");
@@ -20,7 +22,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <h1>Entrar</h1>
-      {erro && <p className="muted">E-mail ou senha inválidos.</p>}
+      {erro && (
+        <p className="muted">
+          {erro === "limite" ? "Muitas tentativas. Espere 15 minutos e tente de novo." : "E-mail ou senha inválidos."}
+        </p>
+      )}
       <form action={login} style={{ display: "grid", gap: 12, maxWidth: 320 }}>
         <input name="email" type="email" placeholder="E-mail" required />
         <input name="password" type="password" placeholder="Senha" required />
