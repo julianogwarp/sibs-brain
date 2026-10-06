@@ -16,6 +16,8 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@sibs/config": "*"
+    "@sibs/config": "*",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
   }
 }

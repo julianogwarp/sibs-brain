@@ -14,6 +14,8 @@
     "@sibs/db": "*"
   },
   "devDependencies": {
-    "@sibs/config": "*"
+    "@sibs/config": "*",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
   }
 }

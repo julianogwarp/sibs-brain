@@ -11,3 +11,5 @@ dist
 nohup.out
 backup
 .vercel
+*.env
+*credentials*

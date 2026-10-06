@@ -15,6 +15,8 @@
     "@typesafe-ai/sdk": "^0.6.0"
   },
   "devDependencies": {
-    "@sibs/config": "*"
+    "@sibs/config": "*",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
   }
 }
