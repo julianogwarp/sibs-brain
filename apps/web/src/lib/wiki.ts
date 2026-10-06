@@ -1,6 +1,6 @@
 import "server-only";
 import { collections } from "@sibs/db";
-import { finalLabels, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
+import { finalLabels, isRemovedTopic, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
 import type { GridPost } from "@/components/wiki/post-grid";
 
 // Páginas da wiki usam até 1280px, mais que os 768px do <main>; centralizado e com 24px de respiro nas bordas.
@@ -15,11 +15,12 @@ export interface Category {
   updatedAt: string; // ISO
 }
 
-/** Todas as categorias (páginas), as com mais posts primeiro. */
+/** Todas as categorias (páginas), as com mais posts primeiro. Temas removidos ficam de fora. */
 export async function getCategories(): Promise<Category[]> {
   const { pages } = await collections();
   const list = await pages.find({}, { projection: { title: 1, sourceThreadIds: 1, updatedAt: 1 } }).toArray();
   return list
+    .filter((p) => !isRemovedTopic(p._id, p.title))
     .map((p) => ({ slug: p._id, title: p.title, posts: p.sourceThreadIds.length, updatedAt: p.updatedAt.toISOString() }))
     .sort((a, b) => b.posts - a.posts || a.title.localeCompare(b.title, "pt-BR"));
 }

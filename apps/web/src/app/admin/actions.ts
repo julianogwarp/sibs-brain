@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { destroySession, requireAdmin } from "@/lib/session";
 
@@ -31,7 +32,7 @@ export async function resolveReview(threadId: string, formData: FormData) {
   if (!cls) return;
 
   const now = new Date();
-  if (decision === "publish" && topic) {
+  if (decision === "publish" && topic && !isRemovedTopic(topic)) {
     await c.classifications.updateOne(
       { _id: threadId },
       {

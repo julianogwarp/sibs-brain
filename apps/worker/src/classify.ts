@@ -1,5 +1,5 @@
 import type { Classification, ClassificationStatus } from "@sibs/core";
-import { Classifier, NEW_TOPIC, SEED_TOPICS } from "@sibs/classifier";
+import { Classifier, isRemovedTopic, NEW_TOPIC, SEED_TOPICS } from "@sibs/classifier";
 import { BudgetExceededError, collections } from "@sibs/db";
 import { Validator } from "@sibs/validator";
 import { threadsToClassify } from "@sibs/wiki-engine";
@@ -39,7 +39,10 @@ export async function classifyPending(deadline = Infinity): Promise<Set<string>>
       console.warn(`[classificação] prazo da execução atingido; ${pending.length - i} threads ficam para a próxima`);
       break;
     }
-    const topics = Object.fromEntries((await c.topics.find().toArray()).map((t) => [t._id, t.description]));
+    // Temas removidos nunca são oferecidos ao jev nem à LLM
+    const topics = Object.fromEntries(
+      (await c.topics.find().toArray()).filter((t) => !isRemovedTopic(t._id, t.name)).map((t) => [t._id, t.description]),
+    );
 
     let jev;
     try {
@@ -63,7 +66,9 @@ export async function classifyPending(deadline = Infinity): Promise<Set<string>>
       try {
         console.log(`  ${i + 1}/${pending.length} jev em dúvida (${pct(jev.confidence)}), consultando a LLM...`);
         const v = await validator.validate(thread, jev, topics);
-        if (v.newTopic) {
+        // A LLM insistiu num tema removido (ex.: "vida-pessoal"): não cria o tema e rejeita o post
+        const blocked = isRemovedTopic(v.topic, v.newTopic?.name);
+        if (v.newTopic && !blocked) {
           await c.topics.updateOne(
             { _id: v.topic },
             { $setOnInsert: { name: v.newTopic.name, description: v.newTopic.description, threadIds: [], updatedAt: new Date() } },
@@ -71,7 +76,7 @@ export async function classifyPending(deadline = Infinity): Promise<Set<string>>
           );
         }
         validation = { verdict: v.verdict, topic: v.topic, kind: v.kind, relevant: v.relevant, reasoning: v.reasoning, model: v.model };
-        status = v.verdict === "uncertain" ? "needs_review" : v.relevant ? "published" : "rejected";
+        status = blocked ? "rejected" : v.verdict === "uncertain" ? "needs_review" : v.relevant ? "published" : "rejected";
       } catch (err) {
         if (!(err instanceof BudgetExceededError)) {
           if (skipAfterFailure("LLM", i, err)) break;

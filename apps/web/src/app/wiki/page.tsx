@@ -1,3 +1,4 @@
+import { isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { CategoryNav } from "@/components/wiki/category-nav";
 import { PostGrid } from "@/components/wiki/post-grid";
@@ -10,8 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function AllPosts({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const page = parsePage(await searchParams);
   const { pages } = await collections();
-  const allPages = await pages.find({}, { projection: { sourceThreadIds: 1 } }).toArray();
-  const threadIds = [...new Set(allPages.flatMap((p) => p.sourceThreadIds))];
+  const allPages = await pages.find({}, { projection: { title: 1, sourceThreadIds: 1 } }).toArray();
+  const threadIds = [...new Set(allPages.filter((p) => !isRemovedTopic(p._id, p.title)).flatMap((p) => p.sourceThreadIds))];
   const [categories, loaded] = await Promise.all([getCategories(), loadPosts(threadIds, page)]);
 
   return (

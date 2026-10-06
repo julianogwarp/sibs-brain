@@ -3,3 +3,4 @@ export * from "./classification";
 export * from "./page";
 export * from "./usage";
 export * from "./subtopics";
+export * from "./topics";

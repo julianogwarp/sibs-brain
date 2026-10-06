@@ -1,4 +1,4 @@
-import { finalLabels, type Page, type Thread } from "@sibs/core";
+import { finalLabels, isRemovedTopic, type Page, type Thread } from "@sibs/core";
 import { collections } from "@sibs/db";
 
 const tweetUrl = (username: string, id: string) => `https://x.com/${username}/status/${id}`;
@@ -10,7 +10,7 @@ const tweetUrl = (username: string, id: string) => `https://x.com/${username}/st
 export async function rebuildTopicPage(topicId: string, username: string): Promise<"updated" | "suggested" | "skipped"> {
   const c = await collections();
   const topic = await c.topics.findOne({ _id: topicId });
-  if (!topic) return "skipped";
+  if (!topic || isRemovedTopic(topic._id, topic.name)) return "skipped";
 
   const published = await c.classifications.find({ status: "published" }).toArray();
   const threadIds = published

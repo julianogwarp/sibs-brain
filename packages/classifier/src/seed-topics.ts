@@ -8,10 +8,7 @@ export const SEED_TOPICS: Record<string, { name: string; description: string }> 
   ideias: { name: "Ideias", description: "Reflexões, filosofia e modelos mentais" },
 };
 
-/**
- * Temas que não queremos mais. O worker apaga página, tema e revisões e devolve os posts
- * deles para a fila de classificação, para irem para os temas que restam.
- */
-export const REMOVED_TOPICS: string[] = ["vida"];
+// Temas removidos ficam em @sibs/core (a web também precisa deles)
+export { REMOVED_TOPICS, isRemovedTopic } from "@sibs/core";
 
 export const NEW_TOPIC = "new_topic";

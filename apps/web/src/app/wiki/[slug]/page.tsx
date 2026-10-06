@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Markdown from "react-markdown";
+import { isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { CategoryNav } from "@/components/wiki/category-nav";
 import { PostGrid } from "@/components/wiki/post-grid";
@@ -23,7 +24,7 @@ export default async function WikiPage({
   const requestedPage = parsePage(query);
   const { pages } = await collections();
   const page = await pages.findOne({ _id: slug });
-  if (!page) notFound();
+  if (!page || isRemovedTopic(page._id, page.title)) notFound();
 
   // Subcategorias (só nas categorias que têm): filtram os posts da grade e da timeline
   const subcategories = await getSubcategories(page.topicId, page.sourceThreadIds);

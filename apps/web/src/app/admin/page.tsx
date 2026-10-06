@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { currentMonth } from "@sibs/core";
+import { currentMonth, isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { requireAdmin } from "@/lib/session";
 import { logout, resolveReview, resolveSuggestion } from "./actions";
@@ -71,7 +71,7 @@ export default async function Admin() {
           </p>
           <form action={resolveReview.bind(null, r._id)} style={{ display: "flex", gap: 8 }}>
             <select name="topic" defaultValue={r.validation?.topic ?? r.jev.topic}>
-              {topics.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
+              {topics.filter((t) => !isRemovedTopic(t._id, t.name)).map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
             </select>
             <button name="decision" value="publish">Publicar</button>
             <button name="decision" value="reject">Rejeitar</button>
