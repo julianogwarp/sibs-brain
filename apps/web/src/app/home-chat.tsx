@@ -20,9 +20,16 @@ interface Turn {
 }
 
 const MAX_LENGTH = 500;
+const updateLabel = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 const shortDate = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "numeric", month: "short" });
 
-export function HomeChat({ categories }: { categories: Category[] }) {
+export function HomeChat({ categories, updatedAt }: { categories: Category[]; updatedAt: string | null }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const abort = useRef<AbortController | null>(null);
@@ -112,6 +119,10 @@ export function HomeChat({ categories }: { categories: Category[] }) {
         <div className="flex min-h-[max(8rem,calc(32dvh-5rem))] flex-col justify-end">
           <h1 className="mb-7 mt-0 text-center text-[28px] font-normal leading-tight tracking-normal">Por onde começamos?</h1>
           {composer}
+          <p className="m-0 mt-3 text-center text-xs text-muted-foreground">
+            Os posts são atualizados uma vez por dia
+            {updatedAt && <> · última atualização {updateLabel.format(new Date(updatedAt))}</>}
+          </p>
         </div>
         <div className="pt-8">
           <CategoryList categories={categories} />

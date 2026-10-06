@@ -78,7 +78,7 @@ Páginas editadas à mão nunca são sobrescritas pelo worker; novidades viram s
 
 ## Deploy (Vercel + MongoDB Atlas)
 
-O site e o worker rodam na Vercel; o worker é um Cron Job (`apps/web/vercel.json`, a cada 6 h) que chama
+O site e o worker rodam na Vercel; o worker é um Cron Job (`apps/web/vercel.json`, uma vez por dia às 6h de Brasília) que chama
 `/api/cron/worker`. A rota só aceita a Vercel (cabeçalho `Authorization: Bearer $CRON_SECRET`) e para de
 classificar perto do limite de tempo da função, montando as páginas mesmo assim; o que faltar fica para a
 próxima execução.

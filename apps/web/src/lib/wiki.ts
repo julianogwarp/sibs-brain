@@ -29,6 +29,13 @@ const timeLabel = new Intl.DateTimeFormat("pt-BR", { timeZone: TIME_ZONE, hour: 
 const fullDate = new Intl.DateTimeFormat("pt-BR", { timeZone: TIME_ZONE, day: "numeric", month: "short", year: "numeric" });
 
 
+/** Fim da última coleta do worker (Cron diário), para mostrar na home. */
+export async function lastUpdate(): Promise<string | null> {
+  const { ingestionRuns } = await collections();
+  const run = await ingestionRuns.find({ finishedAt: { $ne: null } }).sort({ startedAt: -1 }).limit(1).next();
+  return run?.finishedAt?.toISOString() ?? null;
+}
+
 export const PAGE_SIZE = 10;
 
 type SearchParams = Record<string, string | string[] | undefined>;
