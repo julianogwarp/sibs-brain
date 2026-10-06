@@ -1,0 +1,26 @@
+{
+  "name": "@sibs/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/pipeline.ts"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
+    "typecheck": "tsc",
+    "estimate": "node --env-file-if-exists=../../.env --import tsx src/estimate.ts"
+  },
+  "dependencies": {
+    "@sibs/ask": "*",
+    "@sibs/classifier": "*",
+    "@sibs/core": "*",
+    "@sibs/db": "*",
+    "@sibs/validator": "*",
+    "@sibs/wiki-engine": "*",
+    "@sibs/x-source": "*"
+  },
+  "devDependencies": {
+    "@sibs/config": "*"
+  }
+}

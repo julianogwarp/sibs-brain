@@ -1,0 +1,19 @@
+{
+  "name": "@sibs/x-source",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@sibs/core": "*",
+    "@sibs/db": "*"
+  },
+  "devDependencies": {
+    "@sibs/config": "*"
+  }
+}

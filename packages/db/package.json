@@ -1,0 +1,19 @@
+{
+  "name": "@sibs/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@sibs/core": "*",
+    "mongodb": "^7.7.0"
+  },
+  "devDependencies": {
+    "@sibs/config": "*"
+  }
+}

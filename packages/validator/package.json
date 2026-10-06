@@ -1,0 +1,21 @@
+{
+  "name": "@sibs/validator",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@sibs/core": "*",
+    "@sibs/db": "*",
+    "openai": "^7.28.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@sibs/config": "*"
+  }
+}

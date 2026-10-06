@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Tema escuro único, no visual da tela de referência: preto puro e cinzas neutros */
+@custom-variant dark (&:where(*));
+
+:root {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #171717;
+  --card-foreground: #ffffff;
+  --popover: #262626;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #262626;
+  --secondary-foreground: #ffffff;
+  --muted: #212121;
+  --muted-foreground: #afafaf;
+  --accent: #2f2f2f;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --border: #2f2f2f;
+  --input: #3a3a3a;
+  --ring: #5a5a5a;
+  --link: #7ab7ff;
+  /* Azul do fundo do logo (public/logo.png) */
+  --brand: #1b03af;
+  --brand-foreground: #ffffff;
+  /* Barra de pergunta (pílula cinza-escura) */
+  --composer: #262626;
+  --composer-border: #353535;
+  --composer-button: #3a3a3a;
+  /* Série única dos gráficos (validada: contraste >= 3:1 no fundo escuro) */
+  --chart-1: #3987e5;
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  /* Texto dos posts: Inter (arquivos locais via @fontsource-variable/inter) */
+  --font-posts: "Inter Variable", ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --color-chart-1: var(--chart-1);
+  --color-composer: var(--composer);
+  --color-composer-border: var(--composer-border);
+  --color-composer-button: var(--composer-button);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-link: var(--link);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { @apply font-sans; }
+  body { @apply bg-background text-foreground leading-relaxed overflow-x-clip; }
+
+  /* O reset do Tailwind remove o estilo do texto; devolve o básico para as páginas da wiki */
+  main h1 { @apply mb-2 mt-2 text-3xl font-bold tracking-tight; }
+  main h2 { @apply mb-2 mt-8 text-xl font-semibold; }
+  main h3 { @apply mb-2 mt-6 text-lg font-semibold; }
+  /* Listas e espaçamento de texto só no conteúdo em markdown, para não vazar em componentes (paginação, menus) */
+  .prose-wiki p, .prose-wiki ul, .prose-wiki ol { @apply my-3; }
+  .prose-wiki ul { @apply list-disc pl-6; }
+  .prose-wiki ol { @apply list-decimal pl-6; }
+  main p { @apply my-3; }
+  /* Links de texto em azul; componentes do shadcn (que têm data-slot) mantêm o próprio estilo */
+  main a:not([data-slot]) { @apply text-link underline-offset-2 hover:underline; }
+  main blockquote { @apply border-l-2 border-border pl-3; }
+  main table { @apply w-full border-collapse; }
+  main td, main th { @apply border-b border-border px-2 py-1.5 text-left; }
+}
+
+/* --- Estilos do site (sem componente shadcn equivalente) ---
+   Ficam na camada base para que as classes do Tailwind/shadcn sempre vençam. */
+@layer base {
+  main { max-width: 768px; margin: 0 auto; padding: 24px 16px 64px; }
+  input:not([data-slot]), textarea:not([data-slot]), select { font: inherit; padding: 6px 10px; border: 1px solid var(--input); border-radius: 6px; background: transparent; color: inherit; }
+  .page-editor textarea { width: 100%; min-height: 60vh; font-family: ui-monospace, monospace; font-size: 14px; }
+  main button:not([data-slot]) { font: inherit; padding: 6px 14px; border-radius: 6px; background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
+}
+.muted { color: var(--muted-foreground); font-size: 14px; }
+.card { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }

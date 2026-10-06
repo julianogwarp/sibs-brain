@@ -1,0 +1,27 @@
+{
+  "name": "sibs-brain",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.11.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "worker": "npm run start -w @sibs/worker",
+    "estimate": "npm run estimate -w @sibs/worker"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.7",
+    "typescript": "^7.0.2"
+  }
+}
