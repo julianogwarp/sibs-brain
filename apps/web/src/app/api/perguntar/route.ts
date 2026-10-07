@@ -25,8 +25,12 @@ export async function POST(req: Request) {
   // Identifica o visitante sem guardar o IP: só um hash com o segredo do site
   const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] ?? req.headers.get("x-real-ip") ?? "local").trim();
   const visitor = createHmac("sha256", process.env.SESSION_SECRET ?? "sibs-brain").update(ip).digest("hex").slice(0, 32);
-  if (!(await allowQuestion(visitor))) {
+  const limit = await allowQuestion(visitor);
+  if (limit === "visitor") {
     return Response.json({ error: "Você fez muitas perguntas nesta hora. Tente de novo mais tarde." }, { status: 429 });
+  }
+  if (limit === "global") {
+    return Response.json({ error: "Muita gente perguntando agora. Tente de novo daqui a pouco." }, { status: 429 });
   }
 
   let sources: Source[];

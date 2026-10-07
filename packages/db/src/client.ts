@@ -33,7 +33,9 @@ function redact(uri: string): string {
 async function connect(): Promise<Db> {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI não definido");
-  const c = new MongoClient(uri, { serverSelectionTimeoutMS: 5_000 });
+  // Cada instância da função na Vercel tem seu próprio pool: com o padrão (100) e muitas instâncias
+  // em pico, o Atlas chega ao limite de conexões do cluster. 10 por instância dá conta das consultas
+  const c = new MongoClient(uri, { serverSelectionTimeoutMS: 5_000, maxPoolSize: 10 });
   try {
     await c.connect();
   } catch (err) {

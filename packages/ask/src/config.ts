@@ -10,6 +10,7 @@ export const config = {
   chatUsdPerMtokOutput: () => num("CHAT_USD_PER_MTOK_OUTPUT", 0.5),
   chatBudgetBrl: () => num("CHAT_MONTHLY_BUDGET_BRL", 10),
   chatMaxPerHour: () => num("CHAT_MAX_PER_HOUR", 10),
+  chatMaxGlobalPerHour: () => num("CHAT_MAX_GLOBAL_PER_HOUR", 200),
 };
 
 /** Estimativa conservadora de tokens (~3 caracteres por token). */

@@ -63,6 +63,7 @@ modelo barato (`gpt-6-luna`) que responde citando os posts como [n].
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `CHAT_MAX_PER_HOUR` | 10 | perguntas por visitante por hora (o IP é guardado só como hash) |
+| `CHAT_MAX_GLOBAL_PER_HOUR` | 200 | perguntas por hora no site todo; segura ataques de muitos IPs antes que gastem o orçamento do mês |
 | `CHAT_MONTHLY_BUDGET_BRL` | 10 | limite mensal das respostas; ao atingir, as perguntas pausam |
 | `EMBED_MONTHLY_BUDGET_BRL` | 5 | limite mensal dos embeddings |
 | `CHAT_MODEL` / `EMBEDDING_MODEL` | `gpt-6-luna` / `text-embedding-3-small` | modelos |
