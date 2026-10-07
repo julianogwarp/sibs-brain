@@ -3,7 +3,35 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "MONGODB_URI",
+        "MONGODB_DB",
+        "X_USERNAME",
+        "X_BEARER_TOKEN",
+        "X_START_DATE",
+        "X_EXCLUDE_REPLIES",
+        "X_MONTHLY_BUDGET_BRL",
+        "X_COST_PER_REQUEST_BRL",
+        "X_COST_PER_TWEET_BRL",
+        "OPENAI_API_KEY",
+        "VALIDATOR_MODEL",
+        "VALIDATOR_EFFORT",
+        "VALIDATOR_USD_PER_MTOK_INPUT",
+        "VALIDATOR_USD_PER_MTOK_OUTPUT",
+        "LLM_MONTHLY_BUDGET_BRL",
+        "CONFIDENCE_PUBLISH",
+        "CONFIDENCE_VALIDATE",
+        "CHAT_MODEL",
+        "CHAT_MONTHLY_BUDGET_BRL",
+        "EMBEDDING_MODEL",
+        "EMBED_MONTHLY_BUDGET_BRL",
+        "USD_BRL",
+        "ADMIN_EMAIL",
+        "ADMIN_PASSWORD_HASH",
+        "SESSION_SECRET",
+        "CRON_SECRET"
+      ]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"]
