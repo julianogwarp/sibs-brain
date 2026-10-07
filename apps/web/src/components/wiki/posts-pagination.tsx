@@ -7,7 +7,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { pageHref } from "@/lib/wiki";
+import { wikiHref } from "@/lib/wiki";
 
 /** Páginas visíveis: primeira, última e vizinhas da atual; o resto vira "…". */
 function pageList(page: number, pages: number): (number | "…")[] {
@@ -21,9 +21,10 @@ function pageList(page: number, pages: number): (number | "…")[] {
   return out;
 }
 
-export function PostsPagination({ base, page, pages, sub = null }: { base: string; page: number; pages: number; sub?: string | null }) {
+/** `topic` null = todos os posts. Links do Next: as páginas vizinhas são pré-buscadas quando aparecem na tela. */
+export function PostsPagination({ topic = null, sub = null, page, pages }: { topic?: string | null; sub?: string | null; page: number; pages: number }) {
   if (pages <= 1) return null;
-  const href = (p: number) => pageHref(base, p, sub);
+  const href = (p: number) => wikiHref({ topic, sub, page: p });
   return (
     <Pagination className="mt-10">
       <PaginationContent>

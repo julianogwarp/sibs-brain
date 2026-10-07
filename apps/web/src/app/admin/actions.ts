@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { destroySession, requireAdmin } from "@/lib/session";
+import { revalidateWiki } from "@/lib/wiki";
 
 export async function savePage(slug: string, formData: FormData) {
   await requireAdmin();
@@ -18,7 +19,7 @@ export async function savePage(slug: string, formData: FormData) {
   const now = new Date();
   await c.pages.updateOne({ _id: slug }, { $set: { title, body, editedManually: true, revision, updatedAt: now } });
   await c.revisions.insertOne({ pageId: slug, revision, title, body, source: "manual", createdAt: now });
-  revalidatePath(`/wiki/${slug}`);
+  revalidateWiki(); // o título aparece nas pílulas de todas as páginas
   redirect(`/wiki/${slug}`);
 }
 

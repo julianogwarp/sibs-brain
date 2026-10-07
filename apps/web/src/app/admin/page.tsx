@@ -13,12 +13,13 @@ export default async function Admin() {
   const c = await collections();
   const month = currentMonth();
 
-  const [usage, review, suggestions, topics, lastRun] = await Promise.all([
+  const [usage, review, suggestions, topics, lastRun, pages] = await Promise.all([
     c.usage.find({ month }).toArray(),
     c.classifications.find({ status: "needs_review" }).sort({ updatedAt: 1 }).limit(50).toArray(),
     c.suggestions.find({ resolved: false }).sort({ createdAt: 1 }).toArray(),
     c.topics.find().sort({ _id: 1 }).toArray(),
     c.ingestionRuns.find().sort({ startedAt: -1 }).limit(1).next(),
+    c.pages.find({}, { projection: { title: 1 } }).sort({ title: 1 }).toArray(),
   ]);
   const threads = await c.threads.find({ _id: { $in: review.map((r) => r._id) } }).toArray();
   const threadText = new Map(threads.map((t) => [t._id, t.text]));
@@ -78,6 +79,16 @@ export default async function Admin() {
           </form>
         </div>
       ))}
+
+      {/* O atalho fica aqui, e não na página pública, para ela não depender do cookie e poder ser estática */}
+      <h2>Páginas</h2>
+      <ul>
+        {pages.filter((p) => !isRemovedTopic(p._id, p.title)).map((p) => (
+          <li key={p._id}>
+            <Link href={`/wiki/${p._id}`}>{p.title}</Link> · <Link href={`/admin/editar/${p._id}`}>editar</Link>
+          </li>
+        ))}
+      </ul>
 
       <h2>Sugestões para páginas editadas à mão ({suggestions.length})</h2>
       {suggestions.map((s) => (

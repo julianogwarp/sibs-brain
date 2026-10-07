@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidatePath } from "next/cache";
 import { collections } from "@sibs/db";
 import { finalLabels, isRemovedTopic, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
 import type { GridPost } from "@/components/wiki/post-grid";
@@ -39,21 +40,28 @@ export async function lastUpdate(): Promise<string | null> {
 
 export const PAGE_SIZE = 10;
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-/** Lê ?pagina= da URL (1 quando ausente ou inválido). */
-export function parsePage(params: SearchParams): number {
-  const raw = typeof params.pagina === "string" ? params.pagina : "";
-  return Math.max(1, Math.floor(Number(raw) || 1));
+/**
+ * Invalida todas as páginas públicas; a próxima visita a cada uma gera a versão nova.
+ * As páginas são geradas uma vez e servidas prontas (ISR). O `revalidate = 3600` delas é só a rede de
+ * segurança para quando o worker roda local (npm run worker) e não avisa o site.
+ */
+export function revalidateWiki(): void {
+  revalidatePath("/", "layout");
 }
 
-/** URL com ?sub= (quando houver) e ?pagina= (a partir da 2). */
-export function pageHref(base: string, page: number, sub: string | null = null): string {
-  const q = new URLSearchParams();
-  if (sub) q.set("sub", sub);
-  if (page > 1) q.set("pagina", String(page));
-  const s = q.toString();
-  return s ? `${base}?${s}` : base;
+/**
+ * URL de uma listagem, só no caminho (sem query string) para poder ser pré-renderizada:
+ * /wiki, /wiki/pagina/2, /wiki/tecnologia, /wiki/tecnologia/2, /wiki/tecnologia/frontend/2.
+ */
+export function wikiHref({ topic = null, sub = null, page = 1 }: { topic?: string | null; sub?: string | null; page?: number }): string {
+  const pageSuffix = page > 1 ? `/${page}` : "";
+  if (!topic) return page > 1 ? `/wiki/pagina/${page}` : "/wiki";
+  return `/wiki/${topic}${sub ? `/${sub}` : ""}${pageSuffix}`;
+}
+
+/** Número de página do caminho: só inteiros a partir de 2 ("1" é a URL sem número). */
+export function parsePageSegment(raw: string): number | null {
+  return /^[1-9]\d*$/.test(raw) && raw !== "1" ? Number(raw) : null;
 }
 
 export interface Subcategory {
@@ -87,12 +95,6 @@ export async function getSubcategories(topic: string, threadIds: string[]) {
   const others = counts.get(OTHER_SUBTOPIC) ?? 0;
   if (others > 0) items.push({ slug: OTHER_SUBTOPIC, name: "Outros", count: others });
   return { items, byThread };
-}
-
-/** Lê ?sub= da URL, aceitando só subcategorias que existem na lista. */
-export function parseSub(params: SearchParams, items: Subcategory[] | undefined): string | null {
-  const raw = typeof params.sub === "string" ? params.sub : null;
-  return raw && items?.some((s) => s.slug === raw) ? raw : null;
 }
 
 /** "21–40 de 58" para a página atual da grade. */

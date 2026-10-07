@@ -1,5 +1,6 @@
 import { runPipeline } from "@sibs/worker";
 import { safeEqual } from "@/lib/session";
+import { revalidateWiki } from "@/lib/wiki";
 
 export const dynamic = "force-dynamic";
 // Tempo máximo da função (s). 300 cabe em qualquer configuração do plano Pro; com Fluid compute
@@ -18,6 +19,8 @@ export async function GET(req: Request) {
   const started = Date.now();
   try {
     await runPipeline({ deadline: started + maxDuration * 1000 - SAFETY_MS });
+    // As páginas públicas são estáticas: a próxima visita a cada uma já gera a versão com os posts novos
+    revalidateWiki();
     return Response.json({ ok: true, seconds: Math.round((Date.now() - started) / 1000) });
   } catch (err) {
     console.error(err);

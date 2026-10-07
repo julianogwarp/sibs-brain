@@ -1,7 +1,8 @@
 import { getCategories, lastUpdate } from "@/lib/wiki";
 import { HomeChat } from "./home-chat";
 
-export const dynamic = "force-dynamic";
+// Gerada antes e servida pronta (ISR); o Cron e o /admin invalidam quando os dados mudam
+export const revalidate = 3600;
 
 export default async function Home() {
   const [categories, updatedAt] = await Promise.all([getCategories(), lastUpdate()]);
