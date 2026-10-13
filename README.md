@@ -10,6 +10,9 @@ natural, com respostas que citam os posts originais.
 > Projeto pessoal. O código está aqui para consulta e referência, por isso não há instruções de
 > instalação.
 
+A história do projeto e mais detalhes estão em
+[julianogrendene.com/projects/sibs-brain](https://www.julianogrendene.com/projects/sibs-brain).
+
 ## O que o site oferece
 
 - **Categorias.** Os posts agrupados por tema (Tecnologia, Negócios, Ideias...), do mais recente para o
@@ -21,16 +24,6 @@ natural, com respostas que citam os posts originais.
 
 ## Fluxo básico
 
-```mermaid
-flowchart LR
-    X[Posts no X] --> P[Pipeline diária]
-    P --> DB[(Banco de dados)]
-    DB --> W[Wiki por categoria]
-    DB --> Q[Perguntas e respostas]
-    P -. casos em dúvida .-> A[Revisão manual]
-    A --> DB
-```
-
 1. Uma vez por dia, a pipeline busca os posts novos.
 2. Cada post é classificado por tema e por relevância.
 3. Os relevantes são publicados na categoria certa; os irrelevantes são descartados.
@@ -40,15 +33,6 @@ flowchart LR
 
 A pipeline é uma sequência de etapas que roda automaticamente uma vez por dia. Cada etapa faz uma coisa
 só e entrega o resultado para a próxima.
-
-```mermaid
-flowchart TD
-    A[1. Coleta] --> B[2. Montagem das threads]
-    B --> C[3. Classificação]
-    C --> D[4. Páginas da wiki]
-    D --> E[5. Índice de busca]
-    E --> F[6. Atualização do site]
-```
 
 ### 1. Coleta
 
@@ -63,16 +47,6 @@ e publicada. Se uma thread ganha um post novo, ela volta para a fila de classifi
 ### 3. Classificação
 
 É o coração do projeto. Para economizar sem perder qualidade, a decisão passa por até três níveis:
-
-```mermaid
-flowchart TD
-    T[Thread nova] --> J{Classificador rápido<br/>tema + relevância}
-    J -- confiança alta --> OK[Publica ou descarta direto]
-    J -- dúvida --> L{Modelo de linguagem<br/>revisa a sugestão}
-    J -- muita dúvida --> R[Fila de revisão manual]
-    L -- concorda ou corrige --> OK
-    L -- também em dúvida --> R
-```
 
 - **Classificador rápido.** Um modelo barato responde três perguntas: qual o tema, que tipo de conteúdo
   é (opinião, notícia, indicação...) e se vale registrar. Junto com cada resposta, ele diz o quanto está
@@ -102,13 +76,9 @@ avisado e passa a mostrar a versão nova.
 
 ## Como as perguntas são respondidas
 
-```mermaid
-flowchart LR
-    P[Pergunta] --> V[Vira um vetor]
-    V --> S[Encontra os 8 posts<br/>mais parecidos]
-    S --> M[Modelo de linguagem<br/>responde usando só esses posts]
-    M --> R[Resposta com citações]
-```
+A pergunta vira um vetor, da mesma forma que os posts no índice de busca. O sistema encontra os 8 posts
+de significado mais parecido e entrega só esses para um modelo de linguagem, que escreve uma resposta
+curta citando cada post que usou.
 
 O modelo é instruído a responder apenas com base nos posts encontrados e a dizer quando não achou nada
 sobre o assunto, em vez de inventar.
