@@ -1,4 +1,5 @@
 import { embedPublishedThreads } from "@sibs/ask";
+import { requireEnv } from "@sibs/core";
 import { collections, ensureIndexes } from "@sibs/db";
 import { ingest } from "./ingest";
 import { classifySubtopics } from "./subtopics";
@@ -13,8 +14,7 @@ export interface PipelineOptions {
 
 /** Coleta → classificação → subcategorias → páginas → vetores. Usado pelo CLI e pelo Cron da Vercel. */
 export async function runPipeline({ deadline = Infinity }: PipelineOptions = {}): Promise<void> {
-  const username = process.env.X_USERNAME;
-  if (!username) throw new Error("X_USERNAME não definido");
+  const username = requireEnv("X_USERNAME");
 
   await ensureIndexes();
 

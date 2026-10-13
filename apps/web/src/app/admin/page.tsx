@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { currentMonth, isRemovedTopic } from "@sibs/core";
+import { currentMonth, env, isRemovedTopic } from "@sibs/core";
 import { collections } from "@sibs/db";
 import { requireAdmin } from "@/lib/session";
 import { logout, resolveReview, resolveSuggestion } from "./actions";
@@ -25,10 +25,10 @@ export default async function Admin() {
   const threadText = new Map(threads.map((t) => [t._id, t.text]));
 
   const limits: Record<string, number> = {
-    x: Number(process.env.X_MONTHLY_BUDGET_BRL ?? 50),
-    llm: Number(process.env.LLM_MONTHLY_BUDGET_BRL ?? 30),
-    embed: Number(process.env.EMBED_MONTHLY_BUDGET_BRL ?? 5),
-    chat: Number(process.env.CHAT_MONTHLY_BUDGET_BRL ?? 10),
+    x: env().X_MONTHLY_BUDGET_BRL,
+    llm: env().LLM_MONTHLY_BUDGET_BRL,
+    embed: env().EMBED_MONTHLY_BUDGET_BRL,
+    chat: env().CHAT_MONTHLY_BUDGET_BRL,
   };
 
   return (

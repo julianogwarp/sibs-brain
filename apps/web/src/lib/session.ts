@@ -2,12 +2,13 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { env } from "@sibs/core";
 
 const COOKIE = "sibs_session";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
 
 function secret(): string {
-  const s = process.env.SESSION_SECRET;
+  const s = env().SESSION_SECRET;
   if (!s || s.length < 32) throw new Error("SESSION_SECRET ausente ou curto demais");
   return s;
 }
@@ -41,7 +42,8 @@ export async function isAdmin(): Promise<boolean> {
   const value = (await cookies()).get(COOKIE)?.value;
   if (!value) return false;
   // Sem SESSION_SECRET ninguém é admin, mas as páginas públicas continuam funcionando
-  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+  const s = env().SESSION_SECRET;
+  if (!s || s.length < 32) {
     console.error("SESSION_SECRET ausente ou curto demais; login do admin desativado");
     return false;
   }

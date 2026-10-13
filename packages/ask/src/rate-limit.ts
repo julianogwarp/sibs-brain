@@ -1,5 +1,5 @@
+import { env } from "@sibs/core";
 import { collections } from "@sibs/db";
-import { config } from "./config";
 
 export type QuestionLimit = "ok" | "visitor" | "global";
 
@@ -21,7 +21,7 @@ async function countThisHour(key: string): Promise<number> {
  * do visitante não conta no teto do site.
  */
 export async function allowQuestion(visitorKey: string): Promise<QuestionLimit> {
-  if ((await countThisHour(visitorKey)) > config.chatMaxPerHour()) return "visitor";
-  if ((await countThisHour("global")) > config.chatMaxGlobalPerHour()) return "global";
+  if ((await countThisHour(visitorKey)) > env().CHAT_MAX_PER_HOUR) return "visitor";
+  if ((await countThisHour("global")) > env().CHAT_MAX_GLOBAL_PER_HOUR) return "global";
   return "ok";
 }

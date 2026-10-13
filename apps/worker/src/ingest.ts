@@ -1,4 +1,4 @@
-import type { IngestionRun } from "@sibs/core";
+import { env, type IngestionRun } from "@sibs/core";
 import { BudgetExceededError, collections } from "@sibs/db";
 import { configFromEnv, XSource } from "@sibs/x-source";
 
@@ -33,8 +33,7 @@ export async function ingest(username: string): Promise<IngestResult> {
   const conversationIds = new Set<string>();
 
   // Data mais antiga a coletar (ex.: 2026-01-01). Sem ela, vai até onde a X permitir.
-  const startDate = process.env.X_START_DATE ? new Date(process.env.X_START_DATE) : null;
-  if (startDate && Number.isNaN(startDate.getTime())) throw new Error(`X_START_DATE inválida: ${process.env.X_START_DATE}`);
+  const startDate = env().X_START_DATE ?? null;
 
   /** Salva os tweets da página. Retorna false quando passou da data de início (parar de paginar). */
   const save = async (tweets: Awaited<ReturnType<XSource["fetchTimelinePage"]>>["tweets"]): Promise<boolean> => {

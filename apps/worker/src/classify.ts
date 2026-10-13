@@ -1,11 +1,9 @@
-import type { Classification, ClassificationStatus } from "@sibs/core";
+import { env, type Classification, type ClassificationStatus } from "@sibs/core";
 import { Classifier, isRemovedTopic, NEW_TOPIC, SEED_TOPICS } from "@sibs/classifier";
 import { BudgetExceededError, collections } from "@sibs/db";
 import { Validator } from "@sibs/validator";
 import { threadsToClassify } from "@sibs/wiki-engine";
 
-const PUBLISH = Number(process.env.CONFIDENCE_PUBLISH ?? 0.8);
-const VALIDATE = Number(process.env.CONFIDENCE_VALIDATE ?? 0.5);
 const MAX_CONSECUTIVE_FAILURES = 3;
 
 /** Classifica threads pendentes e devolve os temas cujas páginas precisam ser recriadas. */
@@ -15,6 +13,7 @@ export async function classifyPending(deadline = Infinity): Promise<Set<string>>
   const classifier = new Classifier();
   const validator = new Validator();
   const touched = new Set<string>();
+  const { CONFIDENCE_PUBLISH: PUBLISH, CONFIDENCE_VALIDATE: VALIDATE } = env();
 
   for (const [slug, { name, description }] of Object.entries(SEED_TOPICS)) {
     await c.topics.updateOne(

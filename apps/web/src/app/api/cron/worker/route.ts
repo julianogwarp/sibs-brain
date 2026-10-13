@@ -1,3 +1,4 @@
+import { env } from "@sibs/core";
 import { runPipeline } from "@sibs/worker";
 import { safeEqual } from "@/lib/session";
 import { revalidateWiki } from "@/lib/wiki";
@@ -11,7 +12,7 @@ const SAFETY_MS = 60_000;
 
 /** Chamada pelo Cron Job da Vercel (vercel.json). Só aceita a Vercel, via CRON_SECRET. */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
+  const secret = env().CRON_SECRET;
   if (!secret || !safeEqual(req.headers.get("authorization") ?? "", `Bearer ${secret}`)) {
     return Response.json({ error: "não autorizado" }, { status: 401 });
   }

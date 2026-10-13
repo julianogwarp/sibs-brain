@@ -1,5 +1,5 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { OTHER_SUBTOPIC, TWEET_KINDS, type JevResult, type Thread, type TweetKind } from "@sibs/core";
+import { env, OTHER_SUBTOPIC, TWEET_KINDS, type JevResult, type Thread, type TweetKind } from "@sibs/core";
 import { adjustSpend } from "@sibs/db";
 import { NEW_TOPIC } from "./seed-topics";
 
@@ -18,7 +18,6 @@ const USD_PER_INPUT_TOKEN = 0.042 / 1_000_000;
 
 export class Classifier {
   private readonly client = new TypeSafeClient();
-  private readonly usdBrl = Number(process.env.USD_BRL ?? 5.5);
 
   /** `topics`: slug → descrição (seed + temas que já existem). */
   async classify(thread: Thread, topics: Record<string, string>): Promise<JevResult> {
@@ -35,7 +34,7 @@ export class Classifier {
     });
 
     const { topic, kind, relevant } = response.answers;
-    await adjustSpend("jev", response.usage.input_tokens * USD_PER_INPUT_TOKEN * this.usdBrl, { countCall: true });
+    await adjustSpend("jev", response.usage.input_tokens * USD_PER_INPUT_TOKEN * env().USD_BRL, { countCall: true });
 
     const relevantConfidence = Math.max(relevant.noul, 1 - relevant.noul);
     return {
@@ -67,7 +66,7 @@ export class Classifier {
         }),
       },
     });
-    await adjustSpend("jev", response.usage.input_tokens * USD_PER_INPUT_TOKEN * this.usdBrl, { countCall: true });
+    await adjustSpend("jev", response.usage.input_tokens * USD_PER_INPUT_TOKEN * env().USD_BRL, { countCall: true });
 
     const { choice: slug, confidence } = response.answers.subtopic;
     return { slug: confidence >= minConfidence && slug in subtopics ? slug : OTHER_SUBTOPIC, confidence };

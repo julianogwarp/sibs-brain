@@ -1,7 +1,7 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
 import { collections } from "@sibs/db";
-import { finalLabels, isRemovedTopic, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
+import { env, finalLabels, isRemovedTopic, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
 import type { GridPost } from "@/components/wiki/post-grid";
 
 // Páginas da wiki usam até 1280px, mais que os 768px do <main>; centralizado e com 24px de respiro nas bordas.
@@ -124,7 +124,7 @@ export async function loadPosts(threadIds: string[], requestedPage = 1): Promise
   const total = list.length;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(requestedPage, pages);
-  const username = process.env.X_USERNAME ?? "i";
+  const username = env().X_USERNAME ?? "i";
   const tweetUrl = (t: Thread) => `https://x.com/${username}/status/${t.tweetIds[0]}`;
 
   const posts = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((t) => ({

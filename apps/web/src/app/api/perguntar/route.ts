@@ -1,6 +1,7 @@
-import { createHmac } from "node:crypto";
 import { allowQuestion, answer, search, type Source } from "@sibs/ask";
+import { env } from "@sibs/core";
 import { BudgetExceededError } from "@sibs/db";
+import { visitorKey } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +23,7 @@ export async function POST(req: Request) {
     return Response.json({ error: `A pergunta precisa ter entre 3 e ${MAX_LENGTH} caracteres.` }, { status: 400 });
   }
 
-  // Identifica o visitante sem guardar o IP: só um hash com o segredo do site
-  const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] ?? req.headers.get("x-real-ip") ?? "local").trim();
-  const visitor = createHmac("sha256", process.env.SESSION_SECRET ?? "sibs-brain").update(ip).digest("hex").slice(0, 32);
-  const limit = await allowQuestion(visitor);
+  const limit = await allowQuestion(await visitorKey());
   if (limit === "visitor") {
     return Response.json({ error: "Você fez muitas perguntas nesta hora. Tente de novo mais tarde." }, { status: 429 });
   }
@@ -35,7 +33,7 @@ export async function POST(req: Request) {
 
   let sources: Source[];
   try {
-    sources = await search(question, process.env.X_USERNAME ?? "i");
+    sources = await search(question, env().X_USERNAME ?? "i");
   } catch (err) {
     if (err instanceof BudgetExceededError) return Response.json({ error: UNAVAILABLE }, { status: 503 });
     console.error(err);

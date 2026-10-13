@@ -1,4 +1,4 @@
-import type { Tweet } from "@sibs/core";
+import { env, requireEnv, type Tweet } from "@sibs/core";
 import { adjustSpend, reserveBudget } from "@sibs/db";
 
 const API = "https://api.x.com/2";
@@ -14,14 +14,13 @@ export interface XSourceConfig {
 }
 
 export function configFromEnv(): XSourceConfig {
-  const bearerToken = process.env.X_BEARER_TOKEN;
-  if (!bearerToken) throw new Error("X_BEARER_TOKEN não definido");
+  const e = env();
   return {
-    bearerToken,
-    monthlyBudgetBrl: Number(process.env.X_MONTHLY_BUDGET_BRL ?? 50),
-    costPerTweetBrl: Number(process.env.X_COST_PER_TWEET_BRL ?? 0),
-    costPerRequestBrl: Number(process.env.X_COST_PER_REQUEST_BRL ?? 0),
-    excludeReplies: (process.env.X_EXCLUDE_REPLIES ?? "true") !== "false",
+    bearerToken: requireEnv("X_BEARER_TOKEN"),
+    monthlyBudgetBrl: e.X_MONTHLY_BUDGET_BRL,
+    costPerTweetBrl: e.X_COST_PER_TWEET_BRL,
+    costPerRequestBrl: e.X_COST_PER_REQUEST_BRL,
+    excludeReplies: e.X_EXCLUDE_REPLIES,
   };
 }
 

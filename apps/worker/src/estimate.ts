@@ -1,3 +1,4 @@
+import { env, requireEnv } from "@sibs/core";
 import { closeDb, getMonthlySpend } from "@sibs/db";
 import { configFromEnv, XSource } from "@sibs/x-source";
 
@@ -6,12 +7,11 @@ import { configFromEnv, XSource } from "@sibs/x-source";
  * sem baixar nenhum tweet (só contagens).
  */
 async function main() {
-  const username = process.env.X_USERNAME;
-  if (!username) throw new Error("X_USERNAME não definido");
+  const username = requireEnv("X_USERNAME");
   const config = configFromEnv();
   const x = new XSource(config);
 
-  const start = new Date(process.env.X_START_DATE ?? `${new Date().getFullYear()}-01-01`);
+  const start = env().X_START_DATE ?? new Date(`${new Date().getFullYear()}-01-01`);
   const day = (d: Date) => d.toISOString().slice(0, 10);
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
