@@ -1,6 +1,7 @@
 {
   "name": "sibs-brain",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "packageManager": "npm@11.11.0",
   "workspaces": [
@@ -13,7 +14,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "worker": "npm run start -w @sibs/worker",
-    "estimate": "npm run estimate -w @sibs/worker"
+    "estimate": "npm run estimate -w @sibs/worker",
+    "check:env": "node scripts/check-env.ts"
   },
   "engines": {
     "node": ">=20"

@@ -1,5 +1,5 @@
 import { finalLabels } from "@sibs/core";
-import { collections } from "@sibs/db";
+import { allEmbeddings, classificationsFor, getThreads, publicPages } from "@sibs/db";
 import { embed } from "./embed";
 
 export interface Source {
@@ -22,8 +22,7 @@ export function invalidateSearchCache() {
 /** Vetores ficam em memória; com alguns milhares de threads a comparação leva milissegundos. */
 async function loadVectors() {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache;
-  const { embeddings } = await collections();
-  const docs = await embeddings.find().toArray();
+  const docs = await allEmbeddings();
   cache = { at: Date.now(), ids: docs.map((d) => d._id), vectors: docs.map((d) => Float32Array.from(d.vector)) };
   return cache;
 }
@@ -44,13 +43,8 @@ export async function search(question: string, username: string, k = 8): Promise
     .sort((a, b) => b.score - a.score)
     .slice(0, k);
 
-  const c = await collections();
   const topIds = top.map((t) => t.id);
-  const [threads, classifications, pages] = await Promise.all([
-    c.threads.find({ _id: { $in: topIds } }).toArray(),
-    c.classifications.find({ _id: { $in: topIds } }).toArray(),
-    c.pages.find({}, { projection: { title: 1 } }).toArray(),
-  ]);
+  const [threads, classifications, pages] = await Promise.all([getThreads(topIds), classificationsFor(topIds), publicPages()]);
   const threadById = new Map(threads.map((t) => [t._id, t]));
   const topicById = new Map(classifications.map((cl) => [cl._id, finalLabels(cl).topic]));
   const pageTitle = new Map(pages.map((p) => [p._id, p.title]));

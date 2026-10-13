@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
-import { finalLabels } from "@sibs/core";
-import { adjustSpend, collections, reserveBudget } from "@sibs/db";
-import { config, estimateTokens } from "./config";
+import { env } from "@sibs/core";
+import { adjustSpend, embeddingStates, getThreads, publishedThreadIds, pruneEmbeddings, reserveBudget, saveEmbeddings } from "@sibs/db";
+import { estimateTokens } from "./config";
 import { invalidateSearchCache } from "./search";
 
 const BATCH = 100;
@@ -13,13 +13,13 @@ const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 
 /** Gera embeddings (normalizados pela OpenAI) com o custo dentro do limite do mês. */
 export async function embed(texts: string[]): Promise<number[][]> {
-  const usdToBrl = (tokens: number) => (tokens / 1_000_000) * config.embedUsdPerMtok() * config.usdBrl();
+  const usdToBrl = (tokens: number) => (tokens / 1_000_000) * env().EMBEDDING_USD_PER_MTOK * env().USD_BRL;
   const reserved = usdToBrl(texts.reduce((sum, t) => sum + estimateTokens(t), 0));
-  await reserveBudget("embed", reserved, config.embedBudgetBrl());
+  await reserveBudget("embed", reserved, env().EMBED_MONTHLY_BUDGET_BRL);
 
   let res;
   try {
-    res = await openai().embeddings.create({ model: config.embedModel(), input: texts, encoding_format: "float" });
+    res = await openai().embeddings.create({ model: env().EMBEDDING_MODEL, input: texts, encoding_format: "float" });
   } catch (err) {
     await adjustSpend("embed", -reserved);
     throw err;
@@ -33,18 +33,12 @@ export async function embed(texts: string[]): Promise<number[][]> {
  * e apaga os de threads que deixaram de ser publicadas. Retorna quantos foram gerados.
  */
 export async function embedPublishedThreads(): Promise<number> {
-  const c = await collections();
-  const model = config.embedModel();
+  const model = env().EMBEDDING_MODEL;
 
-  const published = (await c.classifications.find({ status: "published" }).toArray())
-    .filter((cl) => finalLabels(cl).relevant)
-    .map((cl) => cl._id);
-  await c.embeddings.deleteMany({ _id: { $nin: published } });
+  const published = await publishedThreadIds();
+  await pruneEmbeddings(published);
 
-  const [threads, existing] = await Promise.all([
-    c.threads.find({ _id: { $in: published } }).toArray(),
-    c.embeddings.find({}, { projection: { vector: 0 } }).toArray(),
-  ]);
+  const [threads, existing] = await Promise.all([getThreads(published), embeddingStates()]);
   const current = new Map(existing.map((e) => [e._id, e]));
   const todo = threads.filter((t) => {
     const e = current.get(t._id);
@@ -55,15 +49,7 @@ export async function embedPublishedThreads(): Promise<number> {
     const batch = todo.slice(i, i + BATCH);
     const vectors = await embed(batch.map((t) => t.text));
     const now = new Date();
-    await c.embeddings.bulkWrite(
-      batch.map((t, j) => ({
-        replaceOne: {
-          filter: { _id: t._id },
-          replacement: { model, textHash: hash(t.text), vector: vectors[j]!, updatedAt: now },
-          upsert: true,
-        },
-      })),
-    );
+    await saveEmbeddings(batch.map((t, j) => ({ _id: t._id, model, textHash: hash(t.text), vector: vectors[j]!, updatedAt: now })));
   }
   invalidateSearchCache();
   return todo.length;

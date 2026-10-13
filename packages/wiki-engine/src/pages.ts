@@ -1,5 +1,5 @@
-import { finalLabels, isRemovedTopic, type Page, type Thread } from "@sibs/core";
-import { collections } from "@sibs/db";
+import { isRemovedTopic, type Page, type Thread } from "@sibs/core";
+import { addSuggestion, getPage, getThreads, getTopic, publishedThreadIds, saveGeneratedPage } from "@sibs/db";
 
 const tweetUrl = (username: string, id: string) => `https://x.com/${username}/status/${id}`;
 
@@ -8,26 +8,19 @@ const tweetUrl = (username: string, id: string) => `https://x.com/${username}/st
  * Se você editou a página à mão, não sobrescreve: registra uma sugestão para o /admin.
  */
 export async function rebuildTopicPage(topicId: string, username: string): Promise<"updated" | "suggested" | "skipped"> {
-  const c = await collections();
-  const topic = await c.topics.findOne({ _id: topicId });
+  const topic = await getTopic(topicId);
   if (!topic || isRemovedTopic(topic._id, topic.name)) return "skipped";
 
-  const published = await c.classifications.find({ status: "published" }).toArray();
-  const threadIds = published
-    .filter((cl) => {
-      const labels = finalLabels(cl);
-      return labels.relevant && labels.topic === topicId;
-    })
-    .map((cl) => cl._id);
+  const threadIds = await publishedThreadIds(topicId);
   if (threadIds.length === 0) return "skipped";
 
-  const threads = await c.threads.find({ _id: { $in: threadIds } }).sort({ startedAt: -1 }).toArray();
-  const existing = await c.pages.findOne({ _id: topicId });
+  const threads = await getThreads(threadIds);
+  const existing = await getPage(topicId);
 
   if (existing?.editedManually) {
     const newIds = threadIds.filter((id) => !existing.sourceThreadIds.includes(id));
     if (newIds.length > 0) {
-      await c.suggestions.insertOne({ pageId: topicId, threadIds: newIds, createdAt: new Date(), resolved: false });
+      await addSuggestion(topicId, newIds);
       return "suggested";
     }
     return "skipped";
@@ -44,15 +37,7 @@ export async function rebuildTopicPage(topicId: string, username: string): Promi
     revision: (existing?.revision ?? 0) + 1,
     updatedAt: new Date(),
   };
-  await c.pages.replaceOne({ _id: topicId }, page, { upsert: true });
-  await c.revisions.insertOne({
-    pageId: topicId,
-    revision: page.revision,
-    title: page.title,
-    body: page.body,
-    source: "worker",
-    createdAt: page.updatedAt,
-  });
+  await saveGeneratedPage(page);
   return "updated";
 }
 

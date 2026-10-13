@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { collections } from "@sibs/db";
+import { getPage } from "@sibs/db";
 import { requireAdmin } from "@/lib/session";
 import { savePage } from "../../actions";
 
@@ -8,8 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function EditPage({ params }: { params: Promise<{ slug: string }> }) {
   await requireAdmin();
   const { slug } = await params;
-  const { pages } = await collections();
-  const page = await pages.findOne({ _id: slug });
+  const page = await getPage(slug);
   if (!page) notFound();
 
   return (

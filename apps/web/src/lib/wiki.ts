@@ -1,7 +1,8 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
-import { collections } from "@sibs/db";
-import { finalLabels, isRemovedTopic, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
+import { connection } from "next/server";
+import { classificationsFor, getThreads, lastIngestionRun, publicPages } from "@sibs/db";
+import { env, finalLabels, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
 import type { GridPost } from "@/components/wiki/post-grid";
 
 // Páginas da wiki usam até 1280px, mais que os 768px do <main>; centralizado e com 24px de respiro nas bordas.
@@ -18,10 +19,7 @@ export interface Category {
 
 /** Todas as categorias (páginas), as com mais posts primeiro. Temas removidos ficam de fora. */
 export async function getCategories(): Promise<Category[]> {
-  const { pages } = await collections();
-  const list = await pages.find({}, { projection: { title: 1, sourceThreadIds: 1, updatedAt: 1 } }).toArray();
-  return list
-    .filter((p) => !isRemovedTopic(p._id, p.title))
+  return (await publicPages())
     .map((p) => ({ slug: p._id, title: p.title, posts: p.sourceThreadIds.length, updatedAt: p.updatedAt.toISOString() }))
     .sort((a, b) => b.posts - a.posts || a.title.localeCompare(b.title, "pt-BR"));
 }
@@ -33,8 +31,7 @@ const fullDate = new Intl.DateTimeFormat("pt-BR", { timeZone: TIME_ZONE, day: "n
 
 /** Fim da última coleta do worker (Cron diário), para mostrar na home. */
 export async function lastUpdate(): Promise<string | null> {
-  const { ingestionRuns } = await collections();
-  const run = await ingestionRuns.find({ finishedAt: { $ne: null } }).sort({ startedAt: -1 }).limit(1).next();
+  const run = await lastIngestionRun({ finished: true });
   return run?.finishedAt?.toISOString() ?? null;
 }
 
@@ -47,6 +44,23 @@ export const PAGE_SIZE = 10;
  */
 export function revalidateWiki(): void {
   revalidatePath("/", "layout");
+}
+
+/**
+ * Carrega os dados de uma página gerada no build. Se o banco falhar no build (variável faltando no
+ * ambiente, Atlas bloqueando a máquina), o deploy não cai: a página fica para ser gerada na primeira
+ * visita, e o motivo vai para o log do build numa linha [build] fácil de achar.
+ */
+export async function loadOrDefer<T>(route: string, load: () => Promise<T>): Promise<T> {
+  try {
+    return await load();
+  } catch (err) {
+    if (process.env.NEXT_PHASE !== "phase-production-build") throw err;
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(`\n[build] ${route} não foi gerada no build: ${reason}\n[build] Ela será gerada na primeira visita; se o erro continuar, ele aparece nos logs de runtime.\n`);
+    await connection(); // o prerender para aqui e a rota passa a ser renderizada na hora
+    throw err;
+  }
 }
 
 /**
@@ -77,8 +91,7 @@ export interface Subcategory {
 export async function getSubcategories(topic: string, threadIds: string[]) {
   const subs = SUBTOPICS[topic];
   if (!subs) return null;
-  const { classifications } = await collections();
-  const list = await classifications.find({ _id: { $in: threadIds } }).toArray();
+  const list = await classificationsFor(threadIds);
   const byThread = new Map<string, string>();
   for (const id of threadIds) byThread.set(id, OTHER_SUBTOPIC);
   for (const c of list) {
@@ -118,13 +131,12 @@ export interface LoadedPosts {
  * Threads (mais recentes primeiro) no formato da grade, no fuso da wiki, paginadas.
  */
 export async function loadPosts(threadIds: string[], requestedPage = 1): Promise<LoadedPosts> {
-  const { threads } = await collections();
-  const list: Thread[] = await threads.find({ _id: { $in: threadIds } }).sort({ startedAt: -1 }).toArray();
+  const list: Thread[] = await getThreads(threadIds);
 
   const total = list.length;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(requestedPage, pages);
-  const username = process.env.X_USERNAME ?? "i";
+  const username = env().X_USERNAME ?? "i";
   const tweetUrl = (t: Thread) => `https://x.com/${username}/status/${t.tweetIds[0]}`;
 
   const posts = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((t) => ({

@@ -7,6 +7,8 @@ dist
 *.tsbuildinfo
 .DS_Store
 .env.*
+# O modelo, sem valores reais, vai para o git (quem clona copia para .env)
+!.env.example
 .claude
 nohup.out
 backup

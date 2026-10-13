@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { currentMonth, isRemovedTopic } from "@sibs/core";
-import { collections } from "@sibs/db";
+import { currentMonth, env } from "@sibs/core";
+import { activeTopics, getThreads, lastIngestionRun, monthUsage, pendingSuggestions, publicPages, reviewQueue } from "@sibs/db";
 import { requireAdmin } from "@/lib/session";
 import { logout, resolveReview, resolveSuggestion } from "./actions";
 
@@ -10,25 +10,23 @@ const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", curren
 
 export default async function Admin() {
   await requireAdmin();
-  const c = await collections();
   const month = currentMonth();
-
   const [usage, review, suggestions, topics, lastRun, pages] = await Promise.all([
-    c.usage.find({ month }).toArray(),
-    c.classifications.find({ status: "needs_review" }).sort({ updatedAt: 1 }).limit(50).toArray(),
-    c.suggestions.find({ resolved: false }).sort({ createdAt: 1 }).toArray(),
-    c.topics.find().sort({ _id: 1 }).toArray(),
-    c.ingestionRuns.find().sort({ startedAt: -1 }).limit(1).next(),
-    c.pages.find({}, { projection: { title: 1 } }).sort({ title: 1 }).toArray(),
+    monthUsage(month),
+    reviewQueue(),
+    pendingSuggestions(),
+    activeTopics(),
+    lastIngestionRun(),
+    publicPages().then((list) => list.sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))),
   ]);
-  const threads = await c.threads.find({ _id: { $in: review.map((r) => r._id) } }).toArray();
+  const threads = await getThreads(review.map((r) => r._id));
   const threadText = new Map(threads.map((t) => [t._id, t.text]));
 
   const limits: Record<string, number> = {
-    x: Number(process.env.X_MONTHLY_BUDGET_BRL ?? 50),
-    llm: Number(process.env.LLM_MONTHLY_BUDGET_BRL ?? 30),
-    embed: Number(process.env.EMBED_MONTHLY_BUDGET_BRL ?? 5),
-    chat: Number(process.env.CHAT_MONTHLY_BUDGET_BRL ?? 10),
+    x: env().X_MONTHLY_BUDGET_BRL,
+    llm: env().LLM_MONTHLY_BUDGET_BRL,
+    embed: env().EMBED_MONTHLY_BUDGET_BRL,
+    chat: env().CHAT_MONTHLY_BUDGET_BRL,
   };
 
   return (
@@ -72,7 +70,7 @@ export default async function Admin() {
           </p>
           <form action={resolveReview.bind(null, r._id)} style={{ display: "flex", gap: 8 }}>
             <select name="topic" defaultValue={r.validation?.topic ?? r.jev.topic}>
-              {topics.filter((t) => !isRemovedTopic(t._id, t.name)).map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
+              {topics.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
             </select>
             <button name="decision" value="publish">Publicar</button>
             <button name="decision" value="reject">Rejeitar</button>
@@ -83,7 +81,7 @@ export default async function Admin() {
       {/* O atalho fica aqui, e não na página pública, para ela não depender do cookie e poder ser estática */}
       <h2>Páginas</h2>
       <ul>
-        {pages.filter((p) => !isRemovedTopic(p._id, p.title)).map((p) => (
+        {pages.map((p) => (
           <li key={p._id}>
             <Link href={`/wiki/${p._id}`}>{p.title}</Link> · <Link href={`/admin/editar/${p._id}`}>editar</Link>
           </li>

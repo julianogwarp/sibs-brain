@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { TWEET_KINDS, type JevResult, type Thread, type ValidatorVerdict } from "@sibs/core";
+import { env, TWEET_KINDS, type JevResult, type Thread, type ValidatorVerdict } from "@sibs/core";
 import { adjustSpend, reserveBudget } from "@sibs/db";
 
 const VerdictOutput = z.object({
@@ -18,8 +18,6 @@ export interface Validation extends ValidatorVerdict {
   newTopic: { name: string; description: string } | null;
 }
 
-type Effort = "low" | "medium" | "high" | "xhigh" | "max";
-
 const MAX_OUTPUT_TOKENS = 4_000; // inclui os tokens de raciocínio
 
 const INSTRUCTIONS = `Você revisa a classificação automática de tweets que vão alimentar uma wiki sobre um único autor.
@@ -32,27 +30,21 @@ Prefira um tema existente. Só crie um tema novo se nenhum servir, e então pree
 
 export class Validator {
   private readonly client = new OpenAI();
-  private readonly model = process.env.VALIDATOR_MODEL ?? "gpt-6-luna";
-  private readonly effort = (process.env.VALIDATOR_EFFORT ?? "medium") as Effort;
   // Preço em US$ por milhão de tokens; ajuste se trocar de modelo
-  private readonly usdPerInput = Number(process.env.VALIDATOR_USD_PER_MTOK_INPUT ?? 0.1) / 1_000_000;
-  private readonly usdPerOutput = Number(process.env.VALIDATOR_USD_PER_MTOK_OUTPUT ?? 0.5) / 1_000_000;
-  private readonly usdBrl = Number(process.env.USD_BRL ?? 5.5);
-  private readonly budgetBrl = Number(process.env.LLM_MONTHLY_BUDGET_BRL ?? 30);
 
   async validate(thread: Thread, jev: JevResult, topics: Record<string, string>): Promise<Validation> {
     const worstCaseBrl = this.costBrl(this.estimateInputTokens(thread.text), MAX_OUTPUT_TOKENS);
-    await reserveBudget("llm", worstCaseBrl, this.budgetBrl);
+    await reserveBudget("llm", worstCaseBrl, env().LLM_MONTHLY_BUDGET_BRL);
 
     let response;
     try {
       response = await this.client.responses.parse({
-        model: this.model,
+        model: env().VALIDATOR_MODEL,
         instructions: INSTRUCTIONS,
         // Parte estável (temas) primeiro e a variável (thread) no fim: a OpenAI reaproveita o prefixo em cache
         input: `<temas_existentes>\n${JSON.stringify(topics)}\n</temas_existentes>\n\n<sugestao_do_jev>${JSON.stringify(jev)}</sugestao_do_jev>\n\n<texto>\n${thread.text}\n</texto>`,
         prompt_cache_key: "sibs-validator",
-        reasoning: { effort: this.effort },
+        reasoning: { effort: env().VALIDATOR_EFFORT },
         max_output_tokens: MAX_OUTPUT_TOKENS,
         text: { format: zodTextFormat(VerdictOutput, "verdict") },
         store: false,
@@ -100,6 +92,7 @@ export class Validator {
   }
 
   private costBrl(inputTokens: number, outputTokens: number): number {
-    return (inputTokens * this.usdPerInput + outputTokens * this.usdPerOutput) * this.usdBrl;
+    const e = env();
+    return ((inputTokens * e.VALIDATOR_USD_PER_MTOK_INPUT + outputTokens * e.VALIDATOR_USD_PER_MTOK_OUTPUT) / 1_000_000) * e.USD_BRL;
   }
 }

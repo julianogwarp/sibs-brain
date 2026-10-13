@@ -1,4 +1,4 @@
-import { currentMonth, type UsageService } from "@sibs/core";
+import { currentMonth, type Usage, type UsageService } from "@sibs/core";
 import { collections } from "./client";
 
 export class BudgetExceededError extends Error {
@@ -56,4 +56,10 @@ export async function adjustSpend(service: UsageService, deltaBrl: number, opts:
     },
     { upsert: true },
   );
+}
+
+/** Gasto e chamadas de cada serviço no mês (painel do /admin). */
+export async function monthUsage(month = currentMonth()): Promise<Usage[]> {
+  const { usage } = await collections();
+  return usage.find({ month }).toArray();
 }

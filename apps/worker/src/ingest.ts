@@ -1,5 +1,5 @@
-import type { IngestionRun } from "@sibs/core";
-import { BudgetExceededError, collections } from "@sibs/db";
+import { env, type IngestionRun } from "@sibs/core";
+import { BudgetExceededError, finishIngestionRun, saveTweet, startIngestionRun, tweetBounds } from "@sibs/db";
 import { configFromEnv, XSource } from "@sibs/x-source";
 
 interface IngestResult {
@@ -13,11 +13,8 @@ interface IngestResult {
  * 2) Com o orçamento que sobrar, continua baixando o histórico para trás.
  */
 export async function ingest(username: string): Promise<IngestResult> {
-  const c = await collections();
   const x = new XSource(configFromEnv());
-
-  const newest = await c.tweets.find().sort({ createdAt: -1 }).limit(1).next();
-  const oldest = await c.tweets.find().sort({ createdAt: 1 }).limit(1).next();
+  const { newest, oldest } = (await tweetBounds()) ?? {};
 
   const run: IngestionRun = {
     startedAt: new Date(),
@@ -29,18 +26,17 @@ export async function ingest(username: string): Promise<IngestResult> {
     stoppedReason: null,
     error: null,
   };
-  const { insertedId } = await c.ingestionRuns.insertOne(run);
+  const runId = await startIngestionRun(run);
   const conversationIds = new Set<string>();
 
   // Data mais antiga a coletar (ex.: 2026-01-01). Sem ela, vai até onde a X permitir.
-  const startDate = process.env.X_START_DATE ? new Date(process.env.X_START_DATE) : null;
-  if (startDate && Number.isNaN(startDate.getTime())) throw new Error(`X_START_DATE inválida: ${process.env.X_START_DATE}`);
+  const startDate = env().X_START_DATE ?? null;
 
   /** Salva os tweets da página. Retorna false quando passou da data de início (parar de paginar). */
   const save = async (tweets: Awaited<ReturnType<XSource["fetchTimelinePage"]>>["tweets"]): Promise<boolean> => {
     const inRange = startDate ? tweets.filter((t) => t.createdAt >= startDate) : tweets;
     for (const t of inRange) {
-      await c.tweets.replaceOne({ _id: t._id }, t, { upsert: true });
+      await saveTweet(t);
       conversationIds.add(t.conversationId);
     }
     run.fetched += inRange.length;
@@ -86,7 +82,7 @@ export async function ingest(username: string): Promise<IngestResult> {
   }
 
   run.finishedAt = new Date();
-  await c.ingestionRuns.replaceOne({ _id: insertedId }, run);
+  await finishIngestionRun(runId, run);
 
   return { fetched: run.fetched, conversationIds: [...conversationIds], stoppedReason: run.stoppedReason };
 }

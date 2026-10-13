@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { env } from "@sibs/core";
 import { allowAction } from "@/lib/rate-limit";
 import { createSession, safeEqual } from "@/lib/session";
 import { verifyPassword } from "@/lib/password";
@@ -9,8 +10,7 @@ async function login(formData: FormData) {
   if (!(await allowAction("login", 5, 15))) redirect("/admin/login?erro=limite");
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const hash = process.env.ADMIN_PASSWORD_HASH;
+  const { ADMIN_EMAIL: adminEmail, ADMIN_PASSWORD_HASH: hash } = env();
   const ok = !!adminEmail && !!hash && safeEqual(email, adminEmail) && verifyPassword(password, hash);
   if (!ok) redirect("/admin/login?erro=1");
   await createSession();
