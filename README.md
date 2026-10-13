@@ -35,7 +35,7 @@ e publicada. Se uma thread ganha um post novo, ela volta para a fila de classifi
 
 ### 3. Classificação
 
-É o coração do projeto. Para economizar sem perder qualidade, a decisão passa por até três níveis:
+É a parte central do projeto, a decisão passa por até três níveis:
 
 - **Classificador rápido.** Um modelo barato responde três perguntas: qual o tema, que tipo de conteúdo
   é (opinião, notícia, indicação...) e se vale registrar. Junto com cada resposta, ele diz o quanto está
