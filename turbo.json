@@ -14,6 +14,7 @@
         "X_MONTHLY_BUDGET_BRL",
         "X_COST_PER_REQUEST_BRL",
         "X_COST_PER_TWEET_BRL",
+        "TYPESAFE_API_KEY",
         "OPENAI_API_KEY",
         "VALIDATOR_MODEL",
         "VALIDATOR_EFFORT",

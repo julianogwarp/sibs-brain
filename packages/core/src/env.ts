@@ -29,6 +29,7 @@ export const EnvSchema = z
     // Classificação: jev publica direto acima de CONFIDENCE_PUBLISH; entre as duas, a LLM valida
     CONFIDENCE_PUBLISH: ratio(0.8),
     CONFIDENCE_VALIDATE: ratio(0.5),
+    TYPESAFE_API_KEY: z.string().optional(), // lida pelo SDK do jev; aqui só para constar na lista
     OPENAI_API_KEY: z.string().optional(), // lida pelo SDK da OpenAI; aqui só para constar na lista
     VALIDATOR_MODEL: z.string().default("gpt-6-luna"),
     VALIDATOR_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
