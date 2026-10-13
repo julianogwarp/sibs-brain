@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
-import { env, finalLabels } from "@sibs/core";
-import { adjustSpend, collections, reserveBudget } from "@sibs/db";
+import { env } from "@sibs/core";
+import { adjustSpend, embeddingStates, getThreads, publishedThreadIds, pruneEmbeddings, reserveBudget, saveEmbeddings } from "@sibs/db";
 import { estimateTokens } from "./config";
 import { invalidateSearchCache } from "./search";
 
@@ -33,18 +33,12 @@ export async function embed(texts: string[]): Promise<number[][]> {
  * e apaga os de threads que deixaram de ser publicadas. Retorna quantos foram gerados.
  */
 export async function embedPublishedThreads(): Promise<number> {
-  const c = await collections();
   const model = env().EMBEDDING_MODEL;
 
-  const published = (await c.classifications.find({ status: "published" }).toArray())
-    .filter((cl) => finalLabels(cl).relevant)
-    .map((cl) => cl._id);
-  await c.embeddings.deleteMany({ _id: { $nin: published } });
+  const published = await publishedThreadIds();
+  await pruneEmbeddings(published);
 
-  const [threads, existing] = await Promise.all([
-    c.threads.find({ _id: { $in: published } }).toArray(),
-    c.embeddings.find({}, { projection: { vector: 0 } }).toArray(),
-  ]);
+  const [threads, existing] = await Promise.all([getThreads(published), embeddingStates()]);
   const current = new Map(existing.map((e) => [e._id, e]));
   const todo = threads.filter((t) => {
     const e = current.get(t._id);
@@ -55,15 +49,7 @@ export async function embedPublishedThreads(): Promise<number> {
     const batch = todo.slice(i, i + BATCH);
     const vectors = await embed(batch.map((t) => t.text));
     const now = new Date();
-    await c.embeddings.bulkWrite(
-      batch.map((t, j) => ({
-        replaceOne: {
-          filter: { _id: t._id },
-          replacement: { model, textHash: hash(t.text), vector: vectors[j]!, updatedAt: now },
-          upsert: true,
-        },
-      })),
-    );
+    await saveEmbeddings(batch.map((t, j) => ({ _id: t._id, model, textHash: hash(t.text), vector: vectors[j]!, updatedAt: now })));
   }
   invalidateSearchCache();
   return todo.length;

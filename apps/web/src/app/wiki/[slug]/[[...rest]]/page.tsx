@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Markdown from "react-markdown";
-import { isRemovedTopic } from "@sibs/core";
-import { collections } from "@sibs/db";
+import { publicPage } from "@sibs/db";
 import { CategoryNav } from "@/components/wiki/category-nav";
 import { PostGrid } from "@/components/wiki/post-grid";
 import { PostsPagination } from "@/components/wiki/posts-pagination";
@@ -20,9 +19,8 @@ export async function generateStaticParams() {
  */
 export default async function WikiPage({ params }: { params: Promise<{ slug: string; rest?: string[] }> }) {
   const { slug, rest = [] } = await params;
-  const { pages } = await collections();
-  const page = await pages.findOne({ _id: slug });
-  if (!page || isRemovedTopic(page._id, page.title)) notFound();
+  const page = await publicPage(slug); // null também para temas removidos
+  if (!page) notFound();
 
   // Subcategorias (só nas categorias que têm): filtram os posts da grade
   const subcategories = await getSubcategories(page.topicId, page.sourceThreadIds);

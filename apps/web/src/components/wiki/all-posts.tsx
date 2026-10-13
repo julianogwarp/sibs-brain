@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { isRemovedTopic } from "@sibs/core";
-import { collections } from "@sibs/db";
+import { publicPages } from "@sibs/db";
 import { CategoryNav } from "@/components/wiki/category-nav";
 import { PostGrid } from "@/components/wiki/post-grid";
 import { PostsPagination } from "@/components/wiki/posts-pagination";
@@ -8,9 +7,7 @@ import { getCategories, loadPosts, dateSpanLabel, rangeLabel, WIDE } from "@/lib
 
 /** Todos os posts publicados, de todas as categorias (/wiki e /wiki/pagina/N). */
 export async function AllPosts({ page }: { page: number }) {
-  const { pages } = await collections();
-  const allPages = await pages.find({}, { projection: { title: 1, sourceThreadIds: 1 } }).toArray();
-  const threadIds = [...new Set(allPages.filter((p) => !isRemovedTopic(p._id, p.title)).flatMap((p) => p.sourceThreadIds))];
+  const threadIds = [...new Set((await publicPages()).flatMap((p) => p.sourceThreadIds))];
   const [categories, loaded] = await Promise.all([getCategories(), loadPosts(threadIds, page)]);
   if (loaded.page !== page) notFound();
 

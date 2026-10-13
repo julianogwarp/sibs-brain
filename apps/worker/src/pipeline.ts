@@ -1,6 +1,6 @@
 import { embedPublishedThreads } from "@sibs/ask";
 import { requireEnv } from "@sibs/core";
-import { collections, ensureIndexes } from "@sibs/db";
+import { ensureIndexes, tweetBounds } from "@sibs/db";
 import { ingest } from "./ingest";
 import { classifySubtopics } from "./subtopics";
 import { removeTopics } from "./remove-topics";
@@ -20,8 +20,9 @@ export async function runPipeline({ deadline = Infinity }: PipelineOptions = {})
 
   const ingestion = await ingest(username);
   console.log(`[coleta] ${ingestion.fetched} tweets novos (${ingestion.stoppedReason})`);
-  const range = await tweetRange();
-  if (range) console.log(`[coleta] no banco: ${range.count} tweets, de ${range.oldest} até ${range.newest}`);
+  const bounds = await tweetBounds();
+  const day = (d: Date) => d.toISOString().slice(0, 10);
+  if (bounds) console.log(`[coleta] no banco: ${bounds.count} tweets, de ${day(bounds.oldest.createdAt)} até ${day(bounds.newest.createdAt)}`);
 
   await rebuildThreads(ingestion.conversationIds);
   await removeTopics();
@@ -47,15 +48,4 @@ export async function runPipeline({ deadline = Infinity }: PipelineOptions = {})
   } catch (err) {
     console.warn(`[busca] não foi possível gerar os vetores: ${err instanceof Error ? err.message : err}`);
   }
-}
-
-async function tweetRange() {
-  const { tweets } = await collections();
-  const day = (d: Date) => d.toISOString().slice(0, 10);
-  const [oldest, newest, count] = await Promise.all([
-    tweets.find().sort({ createdAt: 1 }).limit(1).next(),
-    tweets.find().sort({ createdAt: -1 }).limit(1).next(),
-    tweets.countDocuments(),
-  ]);
-  return oldest && newest ? { count, oldest: day(oldest.createdAt), newest: day(newest.createdAt) } : null;
 }
