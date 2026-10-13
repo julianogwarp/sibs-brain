@@ -7,20 +7,9 @@ sobre o que cada um fala e se vale a pena guardar, e organiza tudo em categorias
 onde dá para navegar por assunto pelas ideias publicadas ali e também fazer perguntas em linguagem
 natural, com respostas que citam os posts originais.
 
-> Projeto pessoal. O código está aqui para consulta e referência, por isso não há instruções de
-> instalação.
-
-A história do projeto e mais detalhes estão em
+Mais detalhes estão em
 [julianogrendene.com/projects/sibs-brain](https://www.julianogrendene.com/projects/sibs-brain).
 
-## O que o site oferece
-
-- **Categorias.** Os posts agrupados por tema (Tecnologia, Negócios, Ideias...), do mais recente para o
-  mais antigo, com link para o post original no X.
-- **Perguntas.** Na página inicial, qualquer pessoa pergunta algo como "o que @sseraphini pensa
-  sobre performance de frontend?" e recebe uma resposta curta, baseada só nos posts, com as fontes citadas.
-- **Painel do dono.** Uma área restrita para revisar os casos em que a classificação ficou em dúvida,
-  editar páginas à mão e acompanhar o gasto do mês.
 
 ## Fluxo básico
 
@@ -61,8 +50,7 @@ os casos difíceis.
 
 ### 4. Páginas da wiki
 
-Cada tema com posts publicados vira uma página. Se o dono editou uma página à mão, ela nunca é
-sobrescrita: os posts novos aparecem como sugestão no painel.
+Cada tema com posts publicados vira uma página. 
 
 ### 5. Índice de busca
 
@@ -73,27 +61,6 @@ encontrar posts parecidos com uma pergunta, mesmo quando as palavras não são a
 
 As páginas da wiki ficam prontas de antemão e são servidas direto da CDN. Ao fim da pipeline, o site é
 avisado e passa a mostrar a versão nova.
-
-## Como as perguntas são respondidas
-
-A pergunta vira um vetor, da mesma forma que os posts no índice de busca. O sistema encontra os 8 posts
-de significado mais parecido e entrega só esses para um modelo de linguagem, que escreve uma resposta
-curta citando cada post que usou.
-
-O modelo é instruído a responder apenas com base nos posts encontrados e a dizer quando não achou nada
-sobre o assunto, em vez de inventar.
-
-## Proteções
-
-- **Orçamento fixo por mês.** Cada serviço pago (X, modelos de linguagem, busca) tem um teto. Antes de
-  cada chamada, o custo máximo é reservado; se não couber, a chamada não acontece. A conta nunca passa
-  do limite.
-- **Limite de perguntas.** Cada visitante pode fazer algumas perguntas por hora, e o site todo tem um
-  teto por hora, o que impede que um ataque gaste o orçamento do mês de uma vez.
-- **Privacidade.** O endereço IP dos visitantes nunca é guardado, só uma versão embaralhada dele, usada
-  para contar as perguntas.
-
-## Organização do código
 
 O projeto é um monorepo: cada parte da pipeline é um pacote separado, com uma responsabilidade só.
 
@@ -109,7 +76,7 @@ O projeto é um monorepo: cada parte da pipeline é um pacote separado, com uma 
 | `packages/db` | Todo o acesso ao banco, com as regras de negócio num lugar só |
 | `packages/core` | Tipos, validação e configuração compartilhados |
 
-**Tecnologias:** TypeScript, Next.js, MongoDB, Turborepo, OpenAI e Vercel.
+**Tecnologias:** TypeScript, Next.js, MongoDB, Turborepo, OpenAI, Typesafe, Vercel.
 
 ## Licença
 
