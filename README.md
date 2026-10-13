@@ -1,11 +1,11 @@
 # sibs-brain
 
-Uma wiki que se escreve sozinha a partir dos tweets de uma pessoa.
+Uma wiki que se escreve sozinha a partir dos tweets de [@sseraphini](https://x.com/sseraphini).
 
-Todo dia, o sibs-brain lê os posts novos de um perfil do X, decide sobre o que cada um fala e se vale a
-pena guardar, e organiza tudo em categorias. O resultado é um site onde dá para navegar pelas ideias da
-pessoa por assunto e também fazer perguntas em linguagem natural, com respostas que citam os posts
-originais.
+Todo dia, o sibs-brain lê os posts novos da conta [@sseraphini](https://x.com/sseraphini) no X, decide
+sobre o que cada um fala e se vale a pena guardar, e organiza tudo em categorias. O resultado é um site
+onde dá para navegar por assunto pelas ideias publicadas ali e também fazer perguntas em linguagem
+natural, com respostas que citam os posts originais.
 
 > Projeto pessoal. O código está aqui para consulta e referência, por isso não há instruções de
 > instalação.
@@ -14,8 +14,8 @@ originais.
 
 - **Categorias.** Os posts agrupados por tema (Tecnologia, Negócios, Ideias...), do mais recente para o
   mais antigo, com link para o post original no X.
-- **Perguntas.** Na página inicial, qualquer pessoa pergunta algo como "o que ele pensa sobre
-  performance de frontend?" e recebe uma resposta curta, baseada só nos posts, com as fontes citadas.
+- **Perguntas.** Na página inicial, qualquer pessoa pergunta algo como "o que @sseraphini pensa
+  sobre performance de frontend?" e recebe uma resposta curta, baseada só nos posts, com as fontes citadas.
 - **Painel do dono.** Uma área restrita para revisar os casos em que a classificação ficou em dúvida,
   editar páginas à mão e acompanhar o gasto do mês.
 
