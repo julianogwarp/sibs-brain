@@ -1,5 +1,6 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
+import { connection } from "next/server";
 import { classificationsFor, getThreads, lastIngestionRun, publicPages } from "@sibs/db";
 import { env, finalLabels, OTHER_SUBTOPIC, SUBTOPICS, type Thread } from "@sibs/core";
 import type { GridPost } from "@/components/wiki/post-grid";
@@ -43,6 +44,23 @@ export const PAGE_SIZE = 10;
  */
 export function revalidateWiki(): void {
   revalidatePath("/", "layout");
+}
+
+/**
+ * Carrega os dados de uma página gerada no build. Se o banco falhar no build (variável faltando no
+ * ambiente, Atlas bloqueando a máquina), o deploy não cai: a página fica para ser gerada na primeira
+ * visita, e o motivo vai para o log do build numa linha [build] fácil de achar.
+ */
+export async function loadOrDefer<T>(route: string, load: () => Promise<T>): Promise<T> {
+  try {
+    return await load();
+  } catch (err) {
+    if (process.env.NEXT_PHASE !== "phase-production-build") throw err;
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(`\n[build] ${route} não foi gerada no build: ${reason}\n[build] Ela será gerada na primeira visita; se o erro continuar, ele aparece nos logs de runtime.\n`);
+    await connection(); // o prerender para aqui e a rota passa a ser renderizada na hora
+    throw err;
+  }
 }
 
 /**
